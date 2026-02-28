@@ -49,3 +49,54 @@ def _hash_bytes(data: bytes) -> bytes:
         return h[:32] if len(h) >= 32 else h.ljust(32, b"\x00")
 
 
+def title_hash_from_string(s: str) -> bytes:
+    return _hash_bytes(s.encode("utf-8"))
+
+
+def category_hash_from_string(s: str) -> bytes:
+    return _hash_bytes(s.encode("utf-8"))
+
+
+def bytes32_to_hex(b: bytes) -> str:
+    if len(b) > 32:
+        b = b[-32:]
+    return HEX_PREFIX + (b.hex() if isinstance(b, bytes) else b).rjust(64, "0")
+
+
+# -----------------------------------------------------------------------------
+# Fee and price calculations
+# -----------------------------------------------------------------------------
+
+def compute_fee_wei(price_wei: int, fee_bps: int) -> int:
+    if fee_bps > SPEL_MAX_FEE_BPS:
+        raise ValueError("fee_bps must be <= %s" % SPEL_MAX_FEE_BPS)
+    return (price_wei * fee_bps) // SPEL_BPS_BASE
+
+
+def compute_seller_receives(price_wei: int, fee_bps: int) -> int:
+    fee = compute_fee_wei(price_wei, fee_bps)
+    return price_wei - fee
+
+
+# -----------------------------------------------------------------------------
+# Wei / Ether conversion
+# -----------------------------------------------------------------------------
+
+def wei_to_ether(wei: int) -> float:
+    return wei / WEI_PER_ETHER
+
+
+def ether_to_wei(ether: float) -> int:
+    return int(ether * WEI_PER_ETHER)
+
+
+def format_wei(wei: int) -> str:
+    if wei >= WEI_PER_ETHER:
+        return "%.6f ETH" % wei_to_ether(wei)
+    return "%s wei" % wei
+
+
+# -----------------------------------------------------------------------------
+# Config and state (for CLI)
+# -----------------------------------------------------------------------------
+
