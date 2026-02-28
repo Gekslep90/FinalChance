@@ -100,3 +100,54 @@ def format_wei(wei: int) -> str:
 # Config and state (for CLI)
 # -----------------------------------------------------------------------------
 
+@dataclass
+class FinalChanceConfig:
+    contract_address: str = ""
+    rpc_url: str = ""
+    chain_id: int = 1
+    fee_bps: int = 12
+
+
+def get_default_config_path() -> str:
+    return os.path.join(os.path.dirname(__file__), "final_chance_config.json")
+
+
+def load_config(path: Optional[str] = None) -> FinalChanceConfig:
+    path = path or get_default_config_path()
+    cfg = FinalChanceConfig()
+    if os.path.isfile(path):
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+            cfg.contract_address = data.get("contractAddress", "")
+            cfg.rpc_url = data.get("rpcUrl", "")
+            cfg.chain_id = int(data.get("chainId", 1))
+            cfg.fee_bps = int(data.get("feeBps", 12))
+        except Exception:
+            pass
+    return cfg
+
+
+def save_config(cfg: FinalChanceConfig, path: Optional[str] = None) -> None:
+    path = path or get_default_config_path()
+    data = {
+        "contractAddress": cfg.contract_address,
+        "rpcUrl": cfg.rpc_url,
+        "chainId": cfg.chain_id,
+        "feeBps": cfg.fee_bps,
+    }
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def validate_config(cfg: FinalChanceConfig) -> List[str]:
+    errors = []
+    if cfg.fee_bps < 0 or cfg.fee_bps > SPEL_MAX_FEE_BPS:
+        errors.append("feeBps must be 0-%s" % SPEL_MAX_FEE_BPS)
+    if cfg.contract_address and not is_valid_address(cfg.contract_address):
+        errors.append("contractAddress is not a valid 0x40-char address")
+    if cfg.chain_id < 0:
+        errors.append("chainId must be non-negative")
+    return errors
+
+
