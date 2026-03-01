@@ -355,3 +355,54 @@ def is_valid_address(addr: str) -> bool:
 
 def cmd_validate_address(args: argparse.Namespace) -> int:
     addr = args.address
+    if is_valid_address(addr):
+        print("Valid 40-char hex address")
+        return 0
+    print("Invalid address", file=sys.stderr)
+    return 1
+
+
+# -----------------------------------------------------------------------------
+# Simulate buy (local store)
+# -----------------------------------------------------------------------------
+
+def cmd_simulate_buy(args: argparse.Namespace) -> int:
+    store = FinalChanceSpellStore()
+    seller = args.seller or "0x1111111111111111111111111111111111111111"
+    th = title_hash_from_string(args.title)
+    ch = category_hash_from_string(args.category)
+    price = int(args.price)
+    spell_id = store.list_spell(seller, th, ch, price, block=1000)
+    store.delist(spell_id)
+    fee = compute_fee_wei(price, int(args.fee_bps or "12"))
+    to_seller = price - fee
+    print("Simulated buy: spellId=%s price=%s fee=%s toSeller=%s" % (spell_id, price, fee, to_seller))
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: wei/ether conversion
+# -----------------------------------------------------------------------------
+
+def cmd_wei2ether(args: argparse.Namespace) -> int:
+    wei = int(args.wei)
+    if wei < 0:
+        print("Wei must be non-negative", file=sys.stderr)
+        return 1
+    print(wei_to_ether(wei))
+    return 0
+
+
+def cmd_ether2wei(args: argparse.Namespace) -> int:
+    try:
+        ether = float(args.ether)
+    except ValueError:
+        print("Invalid ether value", file=sys.stderr)
+        return 1
+    if ether < 0:
+        print("Ether must be non-negative", file=sys.stderr)
+        return 1
+    print(ether_to_wei(ether))
+    return 0
+
+
