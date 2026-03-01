@@ -508,3 +508,54 @@ def cmd_validate_config(args: argparse.Namespace) -> int:
 # Main CLI
 # -----------------------------------------------------------------------------
 
+def main() -> int:
+    parser = argparse.ArgumentParser(description="FinalChance — Spella spell-book trading helper")
+    parser.add_argument("--config", default="", help="Path to final_chance_config.json")
+    sub = parser.add_subparsers(dest="command", help="Commands")
+
+    p_fee = sub.add_parser("fee", help="Compute fee and seller receives for a price")
+    p_fee.add_argument("price", help="Price in wei")
+    p_fee.add_argument("--fee-bps", default="12", help="Fee in basis points")
+    p_fee.add_argument("--ether", action="store_true", help="Also print price in ETH")
+    p_fee.set_defaults(func=cmd_fee)
+
+    p_hash = sub.add_parser("hash", help="Hash a string to bytes32 (title or category)")
+    p_hash.add_argument("string", help="String to hash")
+    p_hash.add_argument("--kind", choices=["title", "category"], default="title")
+    p_hash.set_defaults(func=cmd_hash)
+
+    p_sim = sub.add_parser("simulate-list", help="Simulate listing a spell")
+    p_sim.add_argument("title", help="Spell title string")
+    p_sim.add_argument("category", help="Category string")
+    p_sim.add_argument("price", help="Price in wei")
+    p_sim.add_argument("--seller", default="", help="Seller address")
+    p_sim.set_defaults(func=cmd_simulate_list)
+
+    p_cfg = sub.add_parser("config", help="Show or set config")
+    p_cfg.add_argument("--set-contract", metavar="ADDR", help="Set contract address")
+    p_cfg.add_argument("--set-rpc", metavar="URL", help="Set RPC URL")
+    p_cfg.add_argument("--set-fee-bps", metavar="BPS", help="Set fee bps")
+    p_cfg.set_defaults(func=cmd_config)
+
+    p_const = sub.add_parser("constants", help="Print Spella constants and addresses")
+    p_const.set_defaults(func=cmd_constants)
+
+    p_batch = sub.add_parser("batch-fee", help="Compute fees for multiple prices (comma-separated)")
+    p_batch.add_argument("prices", help="Comma-separated prices in wei")
+    p_batch.add_argument("--fee-bps", default="12")
+    p_batch.set_defaults(func=cmd_batch_fee)
+
+    p_val = sub.add_parser("validate-address", help="Validate an Ethereum address")
+    p_val.add_argument("address", help="0x-prefixed address")
+    p_val.set_defaults(func=cmd_validate_address)
+
+    p_buy = sub.add_parser("simulate-buy", help="Simulate buying a spell (list then delist, show fee)")
+    p_buy.add_argument("title", help="Spell title")
+    p_buy.add_argument("category", help="Category")
+    p_buy.add_argument("price", help="Price in wei")
+    p_buy.add_argument("--seller", default="")
+    p_buy.add_argument("--fee-bps", default="12")
+    p_buy.set_defaults(func=cmd_simulate_buy)
+
+    p_simrun = sub.add_parser("run-simulation", help="Run multi-list and multi-buy simulation, output JSON")
+    p_simrun.add_argument("--num-list", default="5", help="Number of spells to list")
