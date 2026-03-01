@@ -457,3 +457,54 @@ def cmd_event_topics(args: argparse.Namespace) -> int:
     return 0
 
 
+# -----------------------------------------------------------------------------
+# CLI: price table (fee at various bps)
+# -----------------------------------------------------------------------------
+
+def cmd_price_table(args: argparse.Namespace) -> int:
+    price = int(args.price)
+    if price <= 0:
+        print("Price must be positive", file=sys.stderr)
+        return 1
+    steps = [0, 5, 10, 12, 25, 50, 100, 200, 350]
+    print("Price: %s wei (%s)" % (price, format_wei(price)))
+    print("%-8s %-14s %-14s" % ("Fee bps", "Fee wei", "To seller"))
+    print("-" * 40)
+    for bps in steps:
+        if bps > SPEL_MAX_FEE_BPS:
+            continue
+        fee = compute_fee_wei(price, bps)
+        to_seller = price - fee
+        print("%-8s %-14s %-14s" % (bps, fee, to_seller))
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: version
+# -----------------------------------------------------------------------------
+
+def cmd_version(args: argparse.Namespace) -> int:
+    print("FinalChance %s" % FINAL_CHANCE_VERSION)
+    print("Spella spell-book trading helper (SpellCast companion)")
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: validate config
+# -----------------------------------------------------------------------------
+
+def cmd_validate_config(args: argparse.Namespace) -> int:
+    cfg = load_config(args.config)
+    errs = validate_config(cfg)
+    if not errs:
+        print("Config valid.")
+        return 0
+    for e in errs:
+        print(e, file=sys.stderr)
+    return 1
+
+
+# -----------------------------------------------------------------------------
+# Main CLI
+# -----------------------------------------------------------------------------
+
