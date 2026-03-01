@@ -406,3 +406,54 @@ def cmd_ether2wei(args: argparse.Namespace) -> int:
     return 0
 
 
+# -----------------------------------------------------------------------------
+# CLI: batch hash (multiple strings)
+# -----------------------------------------------------------------------------
+
+def cmd_batch_hash(args: argparse.Namespace) -> int:
+    strings = [s.strip() for s in args.strings.split(",") if s.strip()]
+    kind = (args.kind or "title").lower()
+    for s in strings:
+        if kind == "title":
+            h = title_hash_from_string(s)
+        else:
+            h = category_hash_from_string(s)
+        print("%s -> %s" % (s, bytes32_to_hex(h)))
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: export config
+# -----------------------------------------------------------------------------
+
+def cmd_export_config(args: argparse.Namespace) -> int:
+    cfg = load_config(args.config)
+    out_path = args.output or "final_chance_config_export.json"
+    data = {
+        "contractAddress": cfg.contract_address,
+        "rpcUrl": cfg.rpc_url,
+        "chainId": cfg.chain_id,
+        "feeBps": cfg.fee_bps,
+        "exportedBy": "FinalChance",
+        "version": FINAL_CHANCE_VERSION,
+    }
+    with open(out_path, "w") as f:
+        json.dump(data, f, indent=2)
+    print("Exported config to %s" % out_path)
+    return 0
+
+
+# -----------------------------------------------------------------------------
+# CLI: event topics dump
+# -----------------------------------------------------------------------------
+
+def cmd_event_topics(args: argparse.Namespace) -> int:
+    for sig in SPEL_EVENTS:
+        top = event_topic(sig)
+        if args.verbose:
+            print("%s\n  %s" % (sig, top))
+        else:
+            print(top)
+    return 0
+
+
