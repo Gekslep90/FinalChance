@@ -559,3 +559,54 @@ def main() -> int:
 
     p_simrun = sub.add_parser("run-simulation", help="Run multi-list and multi-buy simulation, output JSON")
     p_simrun.add_argument("--num-list", default="5", help="Number of spells to list")
+    p_simrun.add_argument("--num-buy", default="3", help="Number to buy")
+    p_simrun.add_argument("--base-price", default="1000000", help="Base price wei")
+    p_simrun.add_argument("--fee-bps", default="12", help="Fee bps")
+    p_simrun.add_argument("--output", "-o", default="", help="Write JSON to file")
+    p_simrun.set_defaults(func=cmd_run_simulation)
+
+    p_wei2eth = sub.add_parser("wei2ether", help="Convert wei to ether")
+    p_wei2eth.add_argument("wei", help="Amount in wei")
+    p_wei2eth.set_defaults(func=cmd_wei2ether)
+
+    p_eth2wei = sub.add_parser("ether2wei", help="Convert ether to wei")
+    p_eth2wei.add_argument("ether", help="Amount in ether (e.g. 1.5)")
+    p_eth2wei.set_defaults(func=cmd_ether2wei)
+
+    p_batch_hash = sub.add_parser("batch-hash", help="Hash multiple strings (comma-separated)")
+    p_batch_hash.add_argument("strings", help="Comma-separated strings")
+    p_batch_hash.add_argument("--kind", choices=["title", "category"], default="title")
+    p_batch_hash.set_defaults(func=cmd_batch_hash)
+
+    p_export = sub.add_parser("export-config", help="Export config to JSON file")
+    p_export.add_argument("--output", "-o", default="", help="Output path")
+    p_export.set_defaults(func=cmd_export_config)
+
+    p_events = sub.add_parser("event-topics", help="Print Spella event topic hashes")
+    p_events.add_argument("--verbose", "-v", action="store_true", help="Show signature + topic")
+    p_events.set_defaults(func=cmd_event_topics)
+
+    p_table = sub.add_parser("price-table", help="Show fee/seller breakdown at various fee bps for a price")
+    p_table.add_argument("price", help="Price in wei")
+    p_table.set_defaults(func=cmd_price_table)
+
+    p_ver = sub.add_parser("version", help="Print FinalChance version")
+    p_ver.set_defaults(func=cmd_version)
+
+    p_val_cfg = sub.add_parser("validate-config", help="Validate current config")
+    p_val_cfg.set_defaults(func=cmd_validate_config)
+
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        return 0
+    return args.func(args)
+
+
+# -----------------------------------------------------------------------------
+# ABI selectors (for reference / encoding)
+# -----------------------------------------------------------------------------
+
+SPEL_SELECTORS = {
+    "listSpell(bytes32,bytes32,uint256)": "listSpell",
+    "delistSpell(uint256)": "delistSpell",
