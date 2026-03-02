@@ -610,3 +610,54 @@ def main() -> int:
 SPEL_SELECTORS = {
     "listSpell(bytes32,bytes32,uint256)": "listSpell",
     "delistSpell(uint256)": "delistSpell",
+    "updateSpellPrice(uint256,uint256)": "updateSpellPrice",
+    "buySpell(uint256)": "buySpell",
+    "sweepFees()": "sweepFees",
+    "getSpell(uint256)": "getSpell",
+    "getListedSpellIds()": "getListedSpellIds",
+    "getSpellIdsBySeller(address)": "getSpellIdsBySeller",
+    "computeFeeForPrice(uint256)": "computeFeeForPrice",
+    "computeSellerReceives(uint256)": "computeSellerReceives",
+}
+
+
+def get_selector(signature: str) -> str:
+    """Return 4-byte selector for a function signature (keccak256 first 4 bytes)."""
+    try:
+        from eth_hash.auto import keccak
+        h = keccak(signature.encode("utf-8"))
+        return HEX_PREFIX + h[:4].hex()
+    except ImportError:
+        return HEX_PREFIX + "00" * 4
+
+
+# -----------------------------------------------------------------------------
+# Event topic hashes (for log filtering)
+# -----------------------------------------------------------------------------
+
+SPEL_EVENTS = [
+    "SpellListed(uint256,address,bytes32,bytes32,uint256,uint256)",
+    "SpellDelisted(uint256,address,uint256)",
+    "SpellTraded(bytes32,uint256,address,address,uint256,uint256,uint256)",
+    "SpellPriceUpdated(uint256,uint256,uint256,uint256)",
+    "FeeSwept(address,uint256,uint256)",
+    "PlatformPauseToggled(bool)",
+    "FeeBpsUpdated(uint256,uint256,uint256)",
+]
+
+
+def event_topic(signature: str) -> str:
+    try:
+        from eth_hash.auto import keccak
+        h = keccak(signature.encode("utf-8"))
+        return HEX_PREFIX + h.hex()
+    except ImportError:
+        return HEX_PREFIX + "00" * 64
+
+
+# -----------------------------------------------------------------------------
+# Run simulation (multiple list + buy)
+# -----------------------------------------------------------------------------
+
+def run_simulation(
+    num_list: int = 5,
