@@ -661,3 +661,52 @@ def event_topic(signature: str) -> str:
 
 def run_simulation(
     num_list: int = 5,
+    num_buy: int = 3,
+    base_price: int = 1_000_000,
+    fee_bps: int = 12,
+) -> Dict[str, Any]:
+    store = FinalChanceSpellStore()
+    seller = "0x1111111111111111111111111111111111111111"
+    buyer = "0x2222222222222222222222222222222222222222"
+    results: Dict[str, Any] = {"listed": [], "bought": [], "total_fee": 0, "total_to_seller": 0}
+    for i in range(num_list):
+        th = title_hash_from_string("spell_%s" % i)
+        ch = category_hash_from_string("category_%s" % (i % 2))
+        price = base_price * (i + 1)
+        spell_id = store.list_spell(seller, th, ch, price, block=1000 + i)
+        results["listed"].append({"spellId": spell_id, "priceWei": price})
+    listed_ids = store.get_listed_ids()
+    for idx, spell_id in enumerate(listed_ids[:num_buy]):
+        entry = store.get_spell(spell_id)
+        fee = compute_fee_wei(entry.price_wei, fee_bps)
+        to_seller = compute_seller_receives(entry.price_wei, fee_bps)
+        store.delist(spell_id)
+        results["bought"].append({
+            "spellId": spell_id,
+            "priceWei": entry.price_wei,
+            "feeWei": fee,
+            "toSeller": to_seller,
+        })
+        results["total_fee"] += fee
+        results["total_to_seller"] += to_seller
+    return results
+
+
+def cmd_run_simulation(args: argparse.Namespace) -> int:
+    num_list = int(args.num_list) if args.num_list else 5
+    num_buy = int(args.num_buy) if args.num_buy else 3
+    base_price = int(args.base_price) if args.base_price else 1_000_000
+    fee_bps = int(args.fee_bps) if args.fee_bps else 12
+    res = run_simulation(num_list=num_list, num_buy=num_buy, base_price=base_price, fee_bps=fee_bps)
+    out = getattr(args, "output", None)
+    if out:
+        with open(out, "w") as f:
+            json.dump(res, f, indent=2)
+        print("Simulation written to %s" % out)
+    else:
+        print(json.dumps(res, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main() or 0)
